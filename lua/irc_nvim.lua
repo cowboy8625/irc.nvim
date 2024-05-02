@@ -68,6 +68,10 @@ M.send_message_from_ui = function()
   M.ui.prompt()
 end
 
+M.jump_to_end_of_message = function()
+  M.ui.jump_to_end_of_message()
+end
+
 M.close_ui = function()
   M.ui.close()
 end
@@ -79,6 +83,7 @@ end
 M.init_keymaps = function()
   vim.api.nvim_buf_set_keymap(M.ui.bufnr, "n", "q", "<cmd>lua require('irc_nvim').close_ui()<CR>", {})
   vim.api.nvim_buf_set_keymap(M.ui.bufnr, "n", "<enter>", "<cmd>lua require('irc_nvim').send_message_from_ui()<CR>", {})
+  vim.api.nvim_buf_set_keymap(M.ui.bufnr, "n", "<C-a>", "<cmd>lua require('irc_nvim').jump_to_end_of_message()<CR>", {})
 end
 
 M.test = function(args)

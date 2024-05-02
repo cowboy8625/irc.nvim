@@ -80,6 +80,13 @@ M.has_prompt = function()
   return true
 end
 
+M.jump_to_end_of_message = function()
+  local col = #vim.api.nvim_buf_get_lines(M.bufnr, -2, -1, false)[1]
+  local row = vim.api.nvim_buf_line_count(M.bufnr)
+  vim.api.nvim_win_set_cursor(M.winid, { row, col })
+  vim.api.nvim_feedkeys("A", "n", true)
+end
+
 ---@return string?
 M.get_message_to_send = function()
   local line = vim.api.nvim_buf_get_lines(M.bufnr, -2, -1, false)[1]
