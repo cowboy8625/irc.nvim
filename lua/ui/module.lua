@@ -12,6 +12,9 @@ M.config = {
 
 ---@param server_name string
 M.init = function(server_name)
+  if M.bufnr then
+    return
+  end
   M.bufnr = vim.api.nvim_create_buf(false, true)
 
   vim.api.nvim_buf_set_name(M.bufnr, server_name)
