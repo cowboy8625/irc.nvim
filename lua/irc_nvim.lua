@@ -42,8 +42,8 @@ M.irc = function()
   M.ui.init(c.server)
   M.init_keymaps()
   vim.cmd('autocmd ExitPre * :lua require("irc_nvim").quit()')
-  -- M.client.init(c.server, c.port, c.nickname, c.username, c.realname, c.channel)
-  -- M.client.connect_to_irc()
+  M.client.init(c.server, c.port, c.nickname, c.username, c.realname, c.channel)
+  M.client.connect_to_irc()
 end
 
 M.quit = function()
