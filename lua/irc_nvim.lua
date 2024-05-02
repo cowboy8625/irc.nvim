@@ -39,13 +39,11 @@ M.irc = function()
   assert(c.username, "username is required")
   assert(c.realname, "realname is required")
   assert(c.channel, "channel is required")
-  M.ui.init()
+  M.ui.init(c.server)
   M.init_keymaps()
   vim.cmd('autocmd ExitPre * :lua require("irc_nvim").quit()')
-  -- M.client.start(c.server, c.port, c.nickname, c.username, c.realname, c.channel)
+  -- M.client.init(c.server, c.port, c.nickname, c.username, c.realname, c.channel)
   -- M.client.connect_to_irc()
-  -- M.client.login_to_irc()
-  -- M.client.join_channel()
 end
 
 M.quit = function()
@@ -59,9 +57,15 @@ M.send = function(args)
 end
 
 M.send_message_from_ui = function()
-  local line = vim.api.nvim_buf_get_lines(M.ui.bufnr, -2, -1, false)[1]
-  print("line: " .. line)
-  M.ui.write(line)
+  local message = M.ui.get_message_to_send()
+  if message == nil then
+    print("No message to send")
+    return
+  end
+  M.client.send_message(message)
+  M.ui.delete_message()
+  M.ui.message("cowboy8625", message)
+  M.ui.prompt()
 end
 
 M.close_ui = function()

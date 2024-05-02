@@ -40,6 +40,8 @@ M.connect_to_irc = function()
     if err then
       print("Failed to connect to IRC server: " .. err)
     else
+      M.login_to_irc()
+      M.join_channel()
       print("Connected to IRC server successfully")
       -- Schedule a function to be executed periodically (e.g., every 30 seconds)
       local interval = 30 * 1000 -- 30 seconds in milliseconds
@@ -47,7 +49,7 @@ M.connect_to_irc = function()
       timer = vim.defer_fn(function()
         if not M.tx:is_closing() then
           -- Send a ping message to keep the connection alive
-          M.tx:write("PING\n")
+          M.tx:write("PING #libera\n")
           print("Sent ping message")
         else
           -- Stop the timer if the connection is closed
@@ -130,7 +132,7 @@ M.close = function()
   M.config = nil
 end
 
-M.start = function(server, port, nickname, username, realname, channel)
+M.init = function(server, port, nickname, username, realname, channel)
   if M.tx then
     M.close()
   end
