@@ -69,7 +69,7 @@ end
 ---@return string
 --- allows non-members to join a channel if it is a closed channel
 --- (invite [nickname] [channel])
-M.invite = function (nickname, channel)
+M.invite = function(nickname, channel)
   return "INVITE" .. " " .. nickname .. " " .. channel
 end
 
@@ -77,7 +77,7 @@ end
 ---@return string
 --- determines if user is on a channel
 --- (ison [nickname])
-M.ison = function (nickname)
+M.ison = function(nickname)
   return "ISON" .. " " .. nickname
 end
 
@@ -86,7 +86,7 @@ end
 ---@return string
 --- joins channels in list
 --- (join [channel] [password])
-M.join = function (channel, password)
+M.join = function(channel, password)
   return "JOIN" .. " " .. channel .. " " .. password
 end
 
@@ -96,7 +96,7 @@ end
 ---@return string
 --- removes client from channel, can only be used by channel operator
 --- (kick [channel] [nickname] [message])
-M.kick = function (channel, nickname, message)
+M.kick = function(channel, nickname, message)
   return "KICK" .. " " .. channel .. " " .. nickname .. " " .. message
 end
 
@@ -105,7 +105,7 @@ end
 ---@return string
 --- removes client from IRC network, can only be used by IRC operator
 --- (kill [nickname] [comment])
-M.kill = function (nickname, comment)
+M.kill = function(nickname, comment)
   return "KILL" .. " " .. nickname .. " " .. comment
 end
 
@@ -114,7 +114,7 @@ end
 ---@return string
 --- sends a message to an invitation only channel to request an invite
 --- (knock [channel] [message])
-M.knock = function (channel, message)
+M.knock = function(channel, message)
   return "KNOCK" .. " " .. channel .. " " .. message
 end
 
@@ -123,7 +123,7 @@ end
 ---@return string
 --- lists server links for specific server
 --- (links [server] [server mask])
-M.links = function (server, mask)
+M.links = function(server, mask)
   return "LINKS" .. " " .. server .. " " .. mask
 end
 
@@ -131,7 +131,7 @@ end
 ---@return string
 --- lists available channels on specified server
 --- (list [channel] [server])
-M.list = function (channel, server)
+M.list = function(channel, server)
   return "LIST" .. " " .. channel .. " " .. server
 end
 
@@ -139,7 +139,7 @@ end
 ---@return string
 --- returns statistics for network
 --- (luser [mask] [server])
-M.lusers = function (mask, server)
+M.lusers = function(mask, server)
   return "LUSERS"
 end
 
@@ -150,7 +150,7 @@ end
 --- set user and channel modes
 --- (mode [nickname] [flags] [user]) or mode [channel] [flags] [args])
 --- TODO: implement both options
-M.mode = function (nickname, flags, user)
+M.mode = function(nickname, flags, user)
   return "MODE" .. " " .. nickname .. " " .. flags .. " " .. user
 end
 
@@ -158,7 +158,7 @@ end
 ---@return string
 --- shows message of the day for specified server
 ---  (motd [server])
-M.motd = function (server)
+M.motd = function(server)
   return "MOTD" .. " " .. server
 end
 
@@ -166,7 +166,7 @@ end
 ---@return string
 --- lists users on specified channel
 --- (names [channels])
-M.names = function (channels)
+M.names = function(channels)
   return "NAMES" .. " " .. table.concat(channels, " ")
 end
 
@@ -174,21 +174,21 @@ end
 ---@return string
 --- allows a user to change their nickname
 --- (nick [nickname])
-M.nick = function (nickname)
+M.nick = function(nickname)
   return "NICK" .. " " .. nickname
 end
 
 ---@return string
 --- sends a private message, but does not allow replies
 ---  (notice [msgtarget] [message])
-M.notice = function (msgtarget, message)
+M.notice = function(msgtarget, message)
   return "NOTICE" .. " " .. msgtarget .. " " .. message
 end
 
 --- authenticates a user as an operator
 --- (oper [username] [password])
 ---@return string
-M.oper = function (username, password)
+M.oper = function(username, password)
   return "OPER" .. " " .. username .. " " .. password
 end
 
@@ -197,7 +197,7 @@ end
 --- removes a user fro the specified channels
 --- (part [channels] [message])
 ---@return string
-M.part = function (channels, message)
+M.part = function(channels, message)
   return "PART" .. " " .. table.concat(channels, " ") .. " " .. message
 end
 
@@ -205,7 +205,7 @@ end
 ---@return string
 --- sets a connection password
 ---  (pass [password])
-M.pass = function (password)
+M.pass = function(password)
   return "PASS" .. " " .. password
 end
 
@@ -214,7 +214,7 @@ end
 ---@return string
 --- tests connection to server
 --- (ping [server1] [server2])
-M.ping = function (server1, server2)
+M.ping = function(server1, server2)
   return "PING" .. " " .. server1 .. " " .. server2
 end
 
@@ -223,7 +223,7 @@ end
 ---@return string
 --- reply to a ping command
 -- (pong [server1] [server2])
-M.pong = function (server1, server2)
+M.pong = function(server1, server2)
   return "PONG" .. " " .. server1 .. " " .. server2
 end
 
@@ -232,7 +232,7 @@ end
 ---@return string
 --- sends a message to a target
 --- (privmsg [target] [message])
-M.privmsg = function (target, message)
+M.privmsg = function(target, message)
   return "PRIVMSG" .. " " .. target .. " " .. message
 end
 
@@ -240,28 +240,28 @@ end
 ---@return string
 --- disconnects the user from the IRC Server sending out the specified message
 --- (quit [message])
-M.quit = function (message)
+M.quit = function(message)
   return "QUIT" .. " " .. message
 end
 
 --- causes the server to check and reload configuration files, only used by IRC Operator
 --- (rehash)
 ---@return string
-M.rehash = function ()
+M.rehash = function()
   return "REHASH"
 end
 
 ---@return string
 --- causes the server to restart, only used by IRC Operator
 --- (restart)
-M.restart = function ()
+M.restart = function()
   return "RESTART"
 end
 
 ---@return string
 --- requests the server rules
 --- (rules)
-M.rules = function ()
+M.rules = function()
   return "RULES"
 end
 
@@ -271,7 +271,7 @@ end
 ---@return string
 --- specifies that the new connection is another IRC server
 --- (server [server] [hopcount] [info])
-M.server = function (server, hopcount, info)
+M.server = function(server, hopcount, info)
   return "SERVER" .. " " .. server .. " " .. hopcount .. " " .. info
 end
 
@@ -283,14 +283,26 @@ end
 ---@return string
 --- registers a new service on the network
 --- (service [nickname] [reserved] [distribution] [type] [reserved] [info])
-M.service = function (nickname, reserved, distribution, type, info)
-  return "SERVICE" .. " " .. nickname .. " " .. reserved .. " " .. distribution .. " " .. type .. " " .. reserved .. " " .. info
+M.service = function(nickname, reserved, distribution, type, info)
+  return "SERVICE"
+    .. " "
+    .. nickname
+    .. " "
+    .. reserved
+    .. " "
+    .. distribution
+    .. " "
+    .. type
+    .. " "
+    .. reserved
+    .. " "
+    .. info
 end
 
 ---@return string
 --- lists current network services
 --- (servlist)
-M.servlist = function ()
+M.servlist = function()
   return "SERVLIST"
 end
 
@@ -299,7 +311,7 @@ end
 ---@return string
 --- same as privmsg, but the target must be a service
 --- (SQUERY <servicename> <text>)
-M.squery = function (servicename, text)
+M.squery = function(servicename, text)
   return "SQUERY" .. " " .. servicename .. " " .. text
 end
 
@@ -308,7 +320,7 @@ end
 ---@return string
 --- specified server quits the network
 --- (squit [server] [comment])
-M.squit = function (server, comment)
+M.squit = function(server, comment)
   return "SQUIT" .. " " .. server .. " " .. comment
 end
 
@@ -316,7 +328,7 @@ end
 ---@return string
 --- changes real name for registered client connection
 --- (setname [real_name])
-M.setname = function (real_name)
+M.setname = function(real_name)
   return "SETNAME" .. " " .. real_name
 end
 
@@ -324,7 +336,7 @@ end
 ---@return string
 --- adds or removes host mask to prevent users from sending matched users messages
 --- (silence [+/-[host_mask])
-M.silence = function (host_mask)
+M.silence = function(host_mask)
   return "SILENCE" .. " " .. host_mask
 end
 
@@ -333,7 +345,7 @@ end
 ---@return string
 --- lists statistics about specified server
 --- (stats [query] [server])
-M.stats = function (query, server)
+M.stats = function(query, server)
   return "STATS" .. " " .. query .. " " .. server
 end
 
@@ -342,7 +354,7 @@ end
 ---@return string
 --- sends message to host users to join IRC
 --- (summon [user] [server])
-M.summon = function (user, server)
+M.summon = function(user, server)
   return "SUMMON" .. " " .. user .. " " .. server
 end
 
@@ -350,7 +362,7 @@ end
 ---@return string
 --- shows time on specified server
 --- (time [server])
-M. = function (server)
+M.time = function(server)
   return "TIME" .. " " .. server
 end
 
@@ -359,7 +371,7 @@ end
 ---@return string
 --- allows the topic to be shown or set for a channel
 --- (topic [channel] [topic])
-M.topic = function (channel, topic)
+M.topic = function(channel, topic)
   return "TOPIC" .. " " .. channel .. " " .. topic
 end
 
@@ -367,7 +379,7 @@ end
 ---@return string
 --- traces the path from local host to a server or user across the IRC network
 --- (trace [target])
-M.trace = function (target)
+M.trace = function(target)
   return "TRACE" .. " " .. target
 end
 
@@ -378,7 +390,7 @@ end
 ---@return string
 --- used to set up a connection to the IRC server
 --- (user [username] [hostname] [servername] [real_name])
-M.user = function (username, hostname, servername, real_name)
+M.user = function(username, hostname, servername, real_name)
   return "USER" .. " " .. username .. " " .. hostname .. " " .. servername .. " " .. real_name
 end
 
@@ -386,7 +398,7 @@ end
 ---@return string
 --- shows information about host
 --- (userhost [nickname])
-M.userhost = function (nickname)
+M.userhost = function(nickname)
   return "USERHOST" .. " " .. nickname
 end
 
@@ -394,7 +406,7 @@ end
 ---@return string
 --- shows IP address of user
 --- (userip [nickname])
-M.userip = function (nickname)
+M.userip = function(nickname)
   return "USERIP" .. " " .. nickname
 end
 
@@ -402,7 +414,7 @@ end
 ---@return string
 --- lists users and information for specified server
 --- (users [server])
-M.users = function (server)
+M.users = function(server)
   return "USERS" .. " " .. server
 end
 
@@ -410,7 +422,7 @@ end
 ---@return string
 --- shows current IRC Server version
 --- (version [server])
-M.version = function (server)
+M.version = function(server)
   return "VERSION" .. " " .. server
 end
 
@@ -418,7 +430,7 @@ end
 ---@return string
 --- sends message to all local operators
 --- (wallops [message])
-M.wallops = function (message)
+M.wallops = function(message)
   return "WALLOPS" .. " " .. message
 end
 
@@ -426,7 +438,7 @@ end
 ---@return string
 --- add or remove a client from friends list
 --- (watch +/-[nickname])
-M.watch = function (nickname)
+M.watch = function(nickname)
   return "WATCH" .. " " .. nickname
 end
 
@@ -434,8 +446,8 @@ end
 ---@return string
 --- shows list of users matching nickname
 --- (who [nickname]) or of operators (who [nickname] "o")
-M.who = function (nickname)
-  return "WHO" .. " " .. nickname "o"
+M.who = function(nickname)
+  return "WHO" .. " " .. nickname("o")
 end
 
 ---@param server string
@@ -443,7 +455,7 @@ end
 ---@return string
 --- shows information about specified client on specified server
 --- (whois [server] [nickname])
-M.whois = function (server, nickname)
+M.whois = function(server, nickname)
   return "WHOIS" .. " " .. server .. " " .. nickname
 end
 
@@ -454,7 +466,7 @@ end
 --- shows information about a user not online, the time (count) they were
 --- online on the specified server
 --- (whowas [nickname] count] [server])
-M.whowas = function (nickname, count, server)
+M.whowas = function(nickname, count, server)
   return "WHOWAS" .. " " .. nickname .. " " .. count .. " " .. server
 end
 

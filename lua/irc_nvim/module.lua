@@ -1,3 +1,4 @@
+local cmd = require("irc_nvim.command")
 local uv = vim.loop
 
 ---@class IrcClient
