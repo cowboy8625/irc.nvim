@@ -16,27 +16,23 @@ M.config = nil
 ---@type table
 M.tx = nil
 
----@param sock table
 ---@param command string
-M.send_irc_command = function(sock, command)
-  sock:write(command .. "\r\n")
+M.cmd = function(command)
+  M.tx:write(command .. "\r\n")
 end
 
 M.login_to_irc = function()
-  print("Logging in as: " .. M.config.nickname)
-  M.send_irc_command(M.tx, "NICK " .. M.config.nickname)
-  M.send_irc_command(M.tx, "USER " .. M.config.username .. " 0 * :" .. M.config.realname)
+  M.cmd(cmd.nick(M.config.nickname))
+  M.cmd(cmd.user(M.config.username, M.config.server, "libera", M.config.realname))
 end
 
 M.join_channel = function()
-  print("Joining channel: " .. M.config.channel)
-  M.send_irc_command(M.tx, "JOIN " .. M.config.channel)
+  M.cmd(cmd.join(M.config.channel, ""))
 end
 
-M.connect_to_irc = function()
-  print("Connecting to: " .. M.config.server .. ":" .. M.config.port)
+---@param output function(data: string)
+M.connect_to_irc = function(output)
   local ip = M.resolve_hostname(M.config.server)
-  print("Resolved IP: " .. ip)
   M.tx:connect(ip, M.config.port, function(err)
     if err then
       print("Failed to connect to IRC server: " .. err)
@@ -44,28 +40,29 @@ M.connect_to_irc = function()
       M.login_to_irc()
       M.join_channel()
       print("Connected to IRC server successfully")
-      -- Schedule a function to be executed periodically (e.g., every 30 seconds)
-      local interval = 30 * 1000 -- 30 seconds in milliseconds
+
       local timer
-      timer = vim.defer_fn(function()
+      local interval = 30 * 1000
+
+      local function send_ping()
         if not M.tx:is_closing() then
-          -- Send a ping message to keep the connection alive
-          M.tx:write("PING #libera\n")
-          print("Sent ping message")
+          M.cmd(cmd.ping1(M.config.server))
+          timer = vim.defer_fn(send_ping, interval)
         else
-          -- Stop the timer if the connection is closed
           vim.clear_fn(timer)
         end
-      end, interval)
+      end
+      timer = vim.defer_fn(send_ping, interval)
 
-      M.receive_data()
+      M.receive_data(output)
     end
   end)
 end
 
-M.receive_data = function()
+---@param output function(data: string)
+M.receive_data = function(output)
   if not M.tx then
-    print("Not connected to IRC server")
+    error("Not connected to IRC server", 1)
     return
   end
 
@@ -73,17 +70,17 @@ M.receive_data = function()
     if err then
       if err.code == "ECONNRESET" then
         print("Connection to IRC server reset by the server")
-        M.stop_receive_data() -- Stop receiving data
-        M.close() -- Close the connection
       else
         print("Error receiving data:", err)
       end
+      M.stop_receive_data() -- Stop receiving data
+      M.close() -- Close the connection
       return
     end
 
     if data then
       -- Process the received data
-      print("Received data:", data)
+      output(data)
     else
       -- Socket closed
       print("Connection to IRC server closed")
@@ -121,8 +118,7 @@ M.send_message = function(message)
     print("Not connected to IRC server")
     return
   end
-  print("Sending message: " .. message)
-  M.send_irc_command(M.tx, "PRIVMSG " .. M.config.channel .. " :" .. message)
+  M.cmd(cmd.privmsg(M.config.channel, message))
 end
 
 M.close = function()

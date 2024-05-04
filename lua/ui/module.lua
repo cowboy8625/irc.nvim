@@ -16,20 +16,11 @@ M.init = function(server_name)
     return
   end
   M.bufnr = vim.api.nvim_create_buf(false, true)
-
   vim.api.nvim_buf_set_name(M.bufnr, server_name)
-
   assert(M.bufnr, "Failed to create buffer")
-
-  M.write("Welcome to the IRC chat!")
-  M.message("cowboy8625", "Hello!")
-  M.message("dude", "Lets GOOOOOOOOOOO!!!!!")
-  M.prompt()
-
+  M.write({ "Welcome to the IRC chat!" })
   vim.api.nvim_buf_set_option(M.bufnr, "syntax", "irc")
-
   local config = M.build_config()
-
   M.winid = vim.api.nvim_open_win(M.bufnr, true, config)
 end
 
@@ -43,7 +34,7 @@ M.prompt = function()
     return
   end
 
-  M.write("> ")
+  M.write({ "> " })
 end
 
 M.build_config = function()
@@ -67,7 +58,7 @@ M.message = function(username, msg)
 
   local fmgs = "<" .. username .. "> " .. msg .. " [" .. os.date("%I:%M %p") .. "]"
 
-  M.write(fmgs)
+  M.write({ fmgs })
 end
 
 M.has_prompt = function()
@@ -114,14 +105,14 @@ M.delete_message = function()
   vim.api.nvim_buf_set_lines(M.bufnr, -2, -1, false, {})
 end
 
-M.write = function(message)
+---@param messages string[]
+M.write = function(messages)
   if not M.bufnr then
     print("Module not initialized")
     return
   end
-  vim.api.nvim_buf_set_lines(M.bufnr, -1, -1, false, {
-    message,
-  })
+  local row = M.has_prompt() and -2 or -1
+  vim.api.nvim_buf_set_lines(M.bufnr, row, row, false, messages)
 end
 
 M.show = function()
