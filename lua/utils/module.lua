@@ -31,4 +31,15 @@ M.filter = function(array, predicate)
   return result
 end
 
+---@param text string
+---@return string
+M.ebg13 = function(text)
+  return (
+    text:gsub("%a", function(c)
+      local base = c:lower() == c and string.byte("a") or string.byte("A")
+      return string.char(base + (string.byte(c) - base + 13) % 26)
+    end)
+  )
+end
+
 return M

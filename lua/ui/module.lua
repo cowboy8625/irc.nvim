@@ -1,8 +1,8 @@
 ---@class IrcUi
 local M = {}
 
-M.bufnr = nil
 M.winid = nil
+M.is_open = false
 
 M.config = {
   relative = "editor",
@@ -12,29 +12,24 @@ M.config = {
 
 ---@param server_name string
 M.init = function(server_name)
-  if M.bufnr then
-    return
-  end
-  M.bufnr = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(M.bufnr, server_name)
-  assert(M.bufnr, "Failed to create buffer")
-  M.write({ "Welcome to the IRC chat!" })
-  vim.api.nvim_buf_set_option(M.bufnr, "syntax", "irc")
-  local config = M.build_config()
-  M.winid = vim.api.nvim_open_win(M.bufnr, true, config)
+  -- -- TODO: close this buffer
+  -- local title_bufnr = vim.api.nvim_create_buf(false, true)
+  -- vim.api.nvim_buf_set_lines(title_bufnr, 0, -1, false, { server_name })
+  local bufnr = vim.api.nvim_create_buf(false, true)
+  assert(bufnr, "Failed to create buffer")
+  vim.api.nvim_buf_set_name(bufnr, server_name)
+  M.write(bufnr, { "Welcome to the IRC chat!" })
+  vim.api.nvim_buf_set_option(bufnr, "syntax", "irc")
+  return bufnr
 end
 
-M.prompt = function()
-  if not M.bufnr then
-    print("Module not initialized")
+---@param bufnr integer
+M.prompt = function(bufnr)
+  if M.has_prompt(bufnr) then
     return
   end
 
-  if M.has_prompt() then
-    return
-  end
-
-  M.write({ "> " })
+  M.write(bufnr, { "> " })
 end
 
 M.build_config = function()
@@ -48,21 +43,18 @@ M.build_config = function()
   return config
 end
 
+---@param bufnr integer
 ---@param username string
 ---@param msg string
-M.message = function(username, msg)
-  if not M.bufnr then
-    print("Module not initialized")
-    return
-  end
-
+M.message = function(bufnr, username, msg)
   local fmgs = "<" .. username .. "> " .. msg .. " [" .. os.date("%I:%M %p") .. "]"
 
-  M.write({ fmgs })
+  M.write(bufnr, { fmgs })
 end
 
-M.has_prompt = function()
-  local line = vim.api.nvim_buf_get_lines(M.bufnr, -2, -1, false)[1]
+---@param bufnr integer
+M.has_prompt = function(bufnr)
+  local line = vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1]
   if line == nil then
     return false
   end
@@ -74,16 +66,18 @@ M.has_prompt = function()
   return true
 end
 
-M.jump_to_end_of_message = function()
-  local col = #vim.api.nvim_buf_get_lines(M.bufnr, -2, -1, false)[1]
-  local row = vim.api.nvim_buf_line_count(M.bufnr)
+---@param bufnr integer
+M.jump_to_end_of_message = function(bufnr)
+  local col = #vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1]
+  local row = vim.api.nvim_buf_line_count(bufnr)
   vim.api.nvim_win_set_cursor(M.winid, { row, col })
   vim.api.nvim_feedkeys("A", "n", true)
 end
 
+---@param bufnr integer
 ---@return string?
-M.get_message_to_send = function()
-  local line = vim.api.nvim_buf_get_lines(M.bufnr, -2, -1, false)[1]
+M.get_message_to_send = function(bufnr)
+  local line = vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1]
   if line == nil then
     return nil
   end
@@ -101,26 +95,26 @@ M.get_message_to_send = function()
   return message
 end
 
-M.delete_message = function()
-  vim.api.nvim_buf_set_lines(M.bufnr, -2, -1, false, {})
+---@param bufnr integer
+M.delete_message = function(bufnr)
+  vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
 end
 
+---@param bufnr integer
 ---@param messages string[]
-M.write = function(messages)
-  if not M.bufnr then
-    print("Module not initialized")
-    return
-  end
-  local row = M.has_prompt() and -2 or -1
-  vim.api.nvim_buf_set_lines(M.bufnr, row, row, false, messages)
+M.write = function(bufnr, messages)
+  local row = M.has_prompt(bufnr) and -2 or -1
+  vim.api.nvim_buf_set_lines(bufnr, row, row, false, messages)
 end
 
-M.show = function()
-  if not M.bufnr then
-    print("Module not initialized")
+---@param bufnr integer
+M.show = function(bufnr)
+  if M.winid then
     return
   end
-  M.winid = vim.api.nvim_open_win(M.bufnr, true, M.config)
+  vim.cmd("tabnew | buffer " .. bufnr)
+  M.is_open = true
+  -- M.winid = vim.api.nvim_open_win(bufnr, true, M.build_config())
 end
 
 M.close = function()
@@ -130,10 +124,6 @@ M.close = function()
   end
   vim.api.nvim_win_close(M.winid, true)
   M.winid = nil
-end
-
-M.delete = function()
-  vim.api.nvim_buf_delete(M.bufnr, { force = true })
 end
 
 return M

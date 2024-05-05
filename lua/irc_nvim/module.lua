@@ -10,7 +10,6 @@ local M = {}
 ---@field nickname string
 ---@field username string
 ---@field realname string
----@field channel string
 M.config = nil
 
 ---@type table
@@ -21,13 +20,24 @@ M.cmd = function(command)
   M.tx:write(command .. "\r\n")
 end
 
-M.login_to_irc = function()
+---@param password? string
+M.login_to_irc = function(password)
   M.cmd(cmd.nick(M.config.nickname))
-  M.cmd(cmd.user(M.config.username, M.config.server, "libera", M.config.realname))
+  M.cmd(cmd.user(M.config.username, "0", "*", M.config.realname))
+  if password then
+    M.identify(password)
+  end
 end
 
-M.join_channel = function()
-  M.cmd(cmd.join(M.config.channel, ""))
+---@param channel string
+M.join_channel = function(channel)
+  print("Joining channel: " .. channel)
+  M.cmd(cmd.join(channel, ""))
+end
+
+---@param password string
+M.identify = function(password)
+  M.cmd("NickServ IDENTIFY" .. M.config.nickname .. password)
 end
 
 ---@param output function(data: string)
@@ -38,7 +48,6 @@ M.connect_to_irc = function(output)
       print("Failed to connect to IRC server: " .. err)
     else
       M.login_to_irc()
-      M.join_channel()
       print("Connected to IRC server successfully")
 
       local timer
@@ -112,13 +121,14 @@ M.resolve_hostname = function(hostname)
   return ip
 end
 
+---@param channel string
 ---@param message string
-M.send_message = function(message)
+M.send_message = function(channel, message)
   if not M.tx then
     print("Not connected to IRC server")
     return
   end
-  M.cmd(cmd.privmsg(M.config.channel, message))
+  M.cmd(cmd.privmsg(channel, message))
 end
 
 M.close = function()
@@ -129,7 +139,7 @@ M.close = function()
   M.config = nil
 end
 
-M.init = function(server, port, nickname, username, realname, channel)
+M.init = function(server, port, nickname, username, realname)
   if M.tx then
     M.close()
   end
@@ -140,8 +150,8 @@ M.init = function(server, port, nickname, username, realname, channel)
     nickname = nickname,
     username = username,
     realname = realname,
-    channel = channel,
   }
+  return M
 end
 
 return M
