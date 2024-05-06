@@ -11,6 +11,7 @@ M.config = {
 }
 
 ---@param server_name string
+---@return integer
 M.init = function(server_name)
   -- -- TODO: close this buffer
   -- local title_bufnr = vim.api.nvim_create_buf(false, true)
@@ -20,6 +21,7 @@ M.init = function(server_name)
   vim.api.nvim_buf_set_name(bufnr, server_name)
   M.write(bufnr, { "Welcome to the IRC chat!" })
   vim.api.nvim_buf_set_option(bufnr, "syntax", "irc")
+  vim.api.nvim_buf_set_option(bufnr, "buftype", "nofile")
   return bufnr
 end
 
@@ -109,20 +111,30 @@ end
 
 ---@param bufnr integer
 M.show = function(bufnr)
+  if M.is_open then
+    return
+  end
   if M.winid then
     return
   end
-  vim.cmd("tabnew | buffer " .. bufnr)
+  -- vim.cmd("tabnew | buffer " .. bufnr)
   M.is_open = true
-  -- M.winid = vim.api.nvim_open_win(bufnr, true, M.build_config())
+  M.winid = vim.api.nvim_open_win(bufnr, true, M.build_config())
+end
+
+M.redraw = function()
+  if not M.winid then
+    return
+  end
+  vim.api.nvim_win_set_config(M.winid, M.build_config())
 end
 
 M.close = function()
   if not M.winid then
-    print("Module not initialized")
     return
   end
   vim.api.nvim_win_close(M.winid, true)
+  M.is_open = false
   M.winid = nil
 end
 

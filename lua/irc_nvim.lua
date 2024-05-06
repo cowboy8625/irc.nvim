@@ -1,8 +1,9 @@
 -- main module file
-local ircClient = require("irc_nvim.module")
+local client = require("client.module")
+local cmd = require("client.command")
 local ircUi = require("ui.module")
 local utils = require("utils.module")
-local cmd = require("irc_nvim.command")
+local channelPicker = require("picker.module")
 
 ---@class Config
 ---@field opt table<string, any>
@@ -28,15 +29,27 @@ M.setup = function(args)
 end
 
 ---@type IrcClient
-M.client = ircClient
+M.client = client
 ---@type IrcUi
 M.ui = ircUi
 ---@type table<string, integer>
 M.channels = {}
 ---@type table{name: string, bufnr: integer}
 M.current_channel = nil
+---@type IrcChannelPicker
+M.channel_picker = channelPicker
+
+M.auto_close = function()
+  vim.cmd([[
+  augroup AutoCloseOnFocusLost
+    autocmd!
+    autocmd WinLeave * :IrcCloseUi
+  augroup END
+  ]])
+end
 
 M.irc = function()
+  M.auto_close()
   local c = M.config.opt
   assert(c.server, "server is required")
   assert(c.port, "port is required")
@@ -50,13 +63,16 @@ M.irc = function()
     assert(M.current_channel.name, "Failed to create buffer")
     M.ui.prompt(M.current_channel.bufnr)
   end
-  M.init_keymaps()
 
-  M.client = ircClient.init(c.server, c.port, c.nickname, c.username, c.realname)
-  M.client.connect_to_irc(M.output_data_to_ui)
-  local p = utils.ebg13(c.password)
-  M.client.login_to_irc(p)
-  M.client.join_channel(M.current_channel.name)
+  for _, bufnr in pairs(M.channels) do
+    M.init_keymaps(bufnr)
+  end
+
+  -- M.client = client.init(c.server, c.port, c.nickname, c.username, c.realname)
+  -- M.client.connect_to_irc(M.output_data_to_ui)
+  -- local p = utils.ebg13(c.password)
+  -- M.client.login_to_irc(p)
+  -- M.client.join_channel(M.current_channel.name)
 
   M.open_ui()
   vim.cmd('autocmd ExitPre * :lua require("irc_nvim").quit()')
@@ -86,10 +102,14 @@ M.output_data_to_ui = function(data)
 end
 
 M.quit = function()
-  M.client.close()
-  M.ui.close()
   for _, bufnr in pairs(M.channels) do
     vim.api.nvim_buf_delete(bufnr, { force = true })
+  end
+  if M.client then
+    M.client.close()
+  end
+  if M.ui then
+    M.ui.close()
   end
 end
 
@@ -121,15 +141,29 @@ M.open_ui = function()
   M.ui.show(M.current_channel.bufnr)
 end
 
-M.init_keymaps = function()
-  for channel, bufnr in pairs(M.channels) do
-    assert(bufnr, "Failed to create buffer")
-    print(channel, bufnr)
-    M.nmap(bufnr, "<enter>", ":lua require('irc_nvim').send_message_from_ui()<CR>")
-    M.imap(bufnr, "<enter>", "<cmd>lua require('irc_nvim').send_message_from_ui()<CR>")
-    M.nmap(bufnr, "q", ":lua require('irc_nvim').close_ui()<CR>")
-    M.nmap(bufnr, "<C-a>", ":lua require('irc_nvim').jump_to_end_of_message()<CR>")
+M.channel_list_ui = function()
+  local bufnr = M.channel_picker.init(M.channels)
+  M.nmap(bufnr, "<enter>", ":lua require('irc_nvim').goto_channel_from_picker()<CR>")
+  M.nmap(bufnr, "q", ":lua require('irc_nvim').channel_picker.close()<CR>")
+end
+
+M.goto_channel_from_picker = function()
+  local data = M.channel_picker.get_bufnr_under_cursor()
+  if data == nil then
+    return
   end
+  -- M.channel_picker.close()
+  M.current_channel = data
+  --M.ui.redraw()
+end
+
+---@param bufnr integer
+M.init_keymaps = function(bufnr)
+  M.nmap(bufnr, "<enter>", ":lua require('irc_nvim').send_message_from_ui()<CR>")
+  M.imap(bufnr, "<enter>", "<cmd>lua require('irc_nvim').send_message_from_ui()<CR>")
+  M.nmap(bufnr, "q", ":lua require('irc_nvim').close_ui()<CR>")
+  M.nmap(bufnr, "<C-a>", ":lua require('irc_nvim').jump_to_end_of_message()<CR>")
+  M.nmap(bufnr, "cp", ":IrcChannelPicker<CR>")
 end
 
 ---@param bufnr integer
