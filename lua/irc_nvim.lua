@@ -61,18 +61,18 @@ M.irc = function()
     M.channels[channel] = M.current_channel.bufnr
     assert(M.current_channel.bufnr, "Failed to create buffer")
     assert(M.current_channel.name, "Failed to create buffer")
-    M.ui.prompt(M.current_channel.bufnr)
+    M.ui.prompt(M.current_channel.name, M.current_channel.bufnr)
   end
 
   for _, bufnr in pairs(M.channels) do
     M.init_keymaps(bufnr)
   end
 
-  -- M.client = client.init(c.server, c.port, c.nickname, c.username, c.realname)
-  -- M.client.connect_to_irc(M.output_data_to_ui)
-  -- local p = utils.ebg13(c.password)
-  -- M.client.login_to_irc(p)
-  -- M.client.join_channel(M.current_channel.name)
+  M.client = client.init(c.server, c.port, c.nickname, c.username, c.realname)
+  M.client.connect_to_irc(M.output_data_to_ui)
+  local p = utils.ebg13(c.password)
+  M.client.login_to_irc(p)
+  M.client.join_channel(M.current_channel.name)
 
   M.open_ui()
   vim.cmd('autocmd ExitPre * :lua require("irc_nvim").quit()')
@@ -126,7 +126,7 @@ M.send_message_from_ui = function()
   M.client.send_message(channel, message)
   M.ui.delete_message(bufnr)
   M.ui.message(bufnr, M.config.opt.username, message)
-  M.ui.prompt(bufnr)
+  M.ui.prompt(M.current_channel.name, bufnr)
 end
 
 M.jump_to_end_of_message = function()

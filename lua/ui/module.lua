@@ -25,13 +25,14 @@ M.init = function(server_name)
   return bufnr
 end
 
+---@param channel string
 ---@param bufnr integer
-M.prompt = function(bufnr)
+M.prompt = function(channel, bufnr)
   if M.has_prompt(bufnr) then
     return
   end
 
-  M.write(bufnr, { "> " })
+  M.write(bufnr, { channel .. "> " })
 end
 
 M.build_config = function()
@@ -84,11 +85,8 @@ M.get_message_to_send = function(bufnr)
     return nil
   end
 
-  if line:sub(1, 1) ~= ">" then
-    return nil
-  end
-
-  local message = line:sub(3, -1)
+  local split_line = vim.split(line, ">")
+  local message = split_line[2]:gsub("^%s*(.-)%s*$", "%1")
 
   if message == "" then
     return nil

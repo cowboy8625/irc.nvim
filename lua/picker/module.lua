@@ -21,7 +21,6 @@ end
 ---@param current? integer current bufnr/channel
 ---@return integer
 M.init = function(data, current)
-  print("init channel picker")
   local names = {}
   local line_of_current_channel = nil
   local i = 0
