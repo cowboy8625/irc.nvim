@@ -11,17 +11,38 @@ M.config = {
   border = "rounded",
 }
 
+---@param line integer
+M.highlight_line = function(line)
+  local src_id = vim.api.nvim_create_namespace("irc_channel_picker")
+  vim.api.nvim_buf_add_highlight(M.bufnr, src_id, "SelectedChannel", line, 0, -1)
+end
+
 ---@param data table<string, integer>[]
+---@param current? integer current bufnr/channel
 ---@return integer
-M.init = function(data)
+M.init = function(data, current)
+  print("init channel picker")
   local names = {}
+  local line_of_current_channel = nil
+  local i = 0
   for channel, bufnr in pairs(data) do
+    if bufnr == current then
+      line_of_current_channel = i
+    end
     table.insert(names, bufnr .. " " .. channel)
+    i = i + 1
   end
+
   M.bufnr = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_name(M.bufnr, "Channel Picker")
   vim.api.nvim_buf_set_option(M.bufnr, "bufhidden", "wipe")
   vim.api.nvim_buf_set_lines(M.bufnr, 0, -1, false, names)
+
+  if line_of_current_channel then
+    print("highlighting line", line_of_current_channel)
+    M.highlight_line(line_of_current_channel)
+  end
+
   vim.api.nvim_buf_set_option(M.bufnr, "modifiable", false)
   M.winid = vim.api.nvim_open_win(M.bufnr, true, M.build_config())
   return M.bufnr

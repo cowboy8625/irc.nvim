@@ -142,7 +142,7 @@ M.open_ui = function()
 end
 
 M.channel_list_ui = function()
-  local bufnr = M.channel_picker.init(M.channels)
+  local bufnr = M.channel_picker.init(M.channels, M.current_channel.bufnr)
   M.nmap(bufnr, "<enter>", ":lua require('irc_nvim').goto_channel_from_picker()<CR>")
   M.nmap(bufnr, "q", ":lua require('irc_nvim').channel_picker.close()<CR>")
 end
@@ -152,9 +152,9 @@ M.goto_channel_from_picker = function()
   if data == nil then
     return
   end
-  -- M.channel_picker.close()
+  M.channel_picker.close()
   M.current_channel = data
-  --M.ui.redraw()
+  M.ui.show(M.current_channel.bufnr)
 end
 
 ---@param bufnr integer

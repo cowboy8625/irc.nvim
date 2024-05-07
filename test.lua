@@ -15,7 +15,7 @@ print(table.remove(lines, #lines))
 -- end
 --
 -- -- set_line_background(0, 1, 5, 0, { hl_group = "MyBackground", id = 1 })
---
+
 -- ---@param bufnr number    -- Buffer number
 -- ---@param line number     -- Line number (0-based)
 -- ---@param hl_group string -- Highlight group
@@ -27,7 +27,7 @@ print(table.remove(lines, #lines))
 -- end
 --
 -- -- Set the background color of line 5 to red
--- -- set_line_background(0, 6, "MyBackground")
+-- set_line_background(0, 6, "MyBackground")
 --
 -- -- lambda
 --
