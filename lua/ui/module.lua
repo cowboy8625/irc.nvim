@@ -19,7 +19,7 @@ M.init = function(server_name)
   local bufnr = vim.api.nvim_create_buf(false, true)
   assert(bufnr, "Failed to create buffer")
   vim.api.nvim_buf_set_name(bufnr, server_name)
-  M.write(bufnr, { "Welcome to the IRC chat!" })
+  M.write(server_name, bufnr, { "Welcome to the IRC chat!" })
   vim.api.nvim_buf_set_option(bufnr, "syntax", "irc")
   vim.api.nvim_buf_set_option(bufnr, "buftype", "nofile")
   return bufnr
@@ -28,11 +28,11 @@ end
 ---@param channel string
 ---@param bufnr integer
 M.prompt = function(channel, bufnr)
-  if M.has_prompt(bufnr) then
+  if M.has_prompt(channel, bufnr) then
     return
   end
 
-  M.write(bufnr, { channel .. "> " })
+  M.write(channel, bufnr, { channel .. "> " })
 end
 
 M.build_config = function()
@@ -46,23 +46,25 @@ M.build_config = function()
   return config
 end
 
+---@param channel string
 ---@param bufnr integer
 ---@param username string
 ---@param msg string
-M.message = function(bufnr, username, msg)
+M.message = function(channel, bufnr, username, msg)
   local fmgs = "<" .. username .. "> " .. msg .. " [" .. os.date("%I:%M %p") .. "]"
 
-  M.write(bufnr, { fmgs })
+  M.write(channel, bufnr, { fmgs })
 end
 
+---@param channel string
 ---@param bufnr integer
-M.has_prompt = function(bufnr)
+M.has_prompt = function(channel, bufnr)
   local line = vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1]
   if line == nil then
     return false
   end
 
-  if line:sub(1, 1) ~= ">" then
+  if line:sub(0, #channel + 1) ~= channel .. ">" then
     return false
   end
 
@@ -100,10 +102,11 @@ M.delete_message = function(bufnr)
   vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
 end
 
+---@param channel string
 ---@param bufnr integer
 ---@param messages string[]
-M.write = function(bufnr, messages)
-  local row = M.has_prompt(bufnr) and -2 or -1
+M.write = function(channel, bufnr, messages)
+  local row = M.has_prompt(channel, bufnr) and -2 or -1
   vim.api.nvim_buf_set_lines(bufnr, row, row, false, messages)
 end
 

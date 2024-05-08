@@ -93,9 +93,9 @@ M.output_data_to_ui = function(data)
         local message_split = vim.split(line, ":")
         local message = table.remove(message_split, #message_split)
         local bufnr = M.channels[channel]
-        M.ui.message(bufnr, username, message)
+        M.ui.message(channel, bufnr, username, message)
       else
-        M.ui.write(M.current_channel.bufnr, { line })
+        M.ui.write(M.current_channel.name, M.current_channel.bufnr, { line })
       end
     end
   end)
@@ -120,12 +120,12 @@ M.send_message_from_ui = function()
   assert(bufnr, "No buffer to send message to")
   local message = M.ui.get_message_to_send(bufnr)
   if message == nil then
-    M.ui.write(bufnr, { "No message to send" })
+    M.ui.write(channel, bufnr, { "No message to send" })
     return
   end
   M.client.send_message(channel, message)
   M.ui.delete_message(bufnr)
-  M.ui.message(bufnr, M.config.opt.username, message)
+  M.ui.message(channel, bufnr, M.config.opt.username, message)
   M.ui.prompt(M.current_channel.name, bufnr)
 end
 
