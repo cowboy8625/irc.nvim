@@ -1,42 +1,47 @@
+local cmd = require("client.command")
 ---@class IrcUi
 local M = {}
 
 M.winid = nil
 M.is_open = false
+---@type TextBox
+M.text_box = require("ui.text_box")
 
 M.config = {
   relative = "editor",
   style = "minimal",
   border = "rounded",
+  title_pos = "center",
 }
 
 ---@param server_name string
 ---@return integer
 M.init = function(server_name)
-  -- -- TODO: close this buffer
-  -- local title_bufnr = vim.api.nvim_create_buf(false, true)
-  -- vim.api.nvim_buf_set_lines(title_bufnr, 0, -1, false, { server_name })
   local bufnr = vim.api.nvim_create_buf(false, true)
   assert(bufnr, "Failed to create buffer")
   vim.api.nvim_buf_set_name(bufnr, server_name)
-  M.write(server_name, bufnr, { "Welcome to the IRC chat!" })
-  vim.api.nvim_buf_set_option(bufnr, "syntax", "irc")
-  vim.api.nvim_buf_set_option(bufnr, "buftype", "nofile")
+  M.write(bufnr, { "Welcome to the IRC chat!" }, { kind = "message" })
+  vim.api.nvim_set_option_value("syntax", "irc", { buf = bufnr })
+  vim.api.nvim_set_option_value("buftype", "nofile", { buf = bufnr })
+  vim.api.nvim_set_option_value("modifiable", false, { buf = bufnr })
+  vim.api.nvim_set_option_value("readonly", true, { buf = bufnr })
   return bufnr
 end
 
----@param channel string
 ---@param bufnr integer
-M.prompt = function(channel, bufnr)
-  if M.has_prompt(channel, bufnr) then
+M.prompt = function(bufnr)
+  if M.has_prompt(bufnr) then
     return
   end
 
-  M.write(channel, bufnr, { channel .. "> " })
+  M.write(bufnr, { "> " }, { kind = "prompt" })
 end
 
-M.build_config = function()
+---@param title string -- channel name
+M.build_config = function(title)
+  title = " " .. title .. " "
   local config = M.config
+  config.title = title
   config.width = math.floor(vim.o.columns * 0.8)
   config.height = math.floor(vim.o.lines * 0.8)
 
@@ -46,29 +51,30 @@ M.build_config = function()
   return config
 end
 
----@param channel string
 ---@param bufnr integer
 ---@param username string
 ---@param msg string
-M.message = function(channel, bufnr, username, msg)
-  local fmgs = "<" .. username .. "> " .. msg .. " [" .. os.date("%I:%M %p") .. "]"
-
-  M.write(channel, bufnr, { fmgs })
+---@param ops? { kind: string }
+M.message = function(bufnr, username, msg, ops)
+  if ops and ops.kind == cmd.PRIVMSG then
+    local fmgs = "<" .. username .. "> " .. msg .. " [" .. os.date("%I:%M %p") .. "]"
+    M.write(bufnr, { fmgs }, ops)
+    return
+  end
+  M.write(bufnr, { msg }, ops)
 end
 
----@param channel string
 ---@param bufnr integer
-M.has_prompt = function(channel, bufnr)
+M.has_prompt = function(bufnr)
   local line = vim.api.nvim_buf_get_lines(bufnr, -2, -1, false)[1]
   if line == nil then
     return false
   end
 
-  if line:sub(0, #channel + 1) ~= channel .. ">" then
-    return false
+  if line:sub(0, 2) == "> " then
+    return true
   end
-
-  return true
+  return false
 end
 
 ---@param bufnr integer
@@ -102,16 +108,30 @@ M.delete_message = function(bufnr)
   vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
 end
 
----@param channel string
 ---@param bufnr integer
 ---@param messages string[]
-M.write = function(channel, bufnr, messages)
-  local row = M.has_prompt(channel, bufnr) and -2 or -1
+---@param ops? { kind: string }
+M.write = function(bufnr, messages, ops)
+  local row = M.has_prompt(bufnr) and -2 or -1
+  if ops and ops.kind == cmd.PRIVMSG then
+    row = -1
+  end
+  vim.api.nvim_set_option_value("modifiable", true, { buf = bufnr })
+  vim.api.nvim_set_option_value("readonly", false, { buf = bufnr })
   vim.api.nvim_buf_set_lines(bufnr, row, row, false, messages)
+  vim.api.nvim_set_option_value("readonly", true, { buf = bufnr })
+  vim.api.nvim_set_option_value("modifiable", false, { buf = bufnr })
 end
 
 ---@param bufnr integer
-M.show = function(bufnr)
+---@param messages string[]
+M.log = function(bufnr, messages)
+  vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, messages)
+end
+
+---@param bufnr integer
+---@param title string
+M.show = function(bufnr, title)
   if M.is_open then
     return
   end
@@ -120,14 +140,7 @@ M.show = function(bufnr)
   end
   -- vim.cmd("tabnew | buffer " .. bufnr)
   M.is_open = true
-  M.winid = vim.api.nvim_open_win(bufnr, true, M.build_config())
-end
-
-M.redraw = function()
-  if not M.winid then
-    return
-  end
-  vim.api.nvim_win_set_config(M.winid, M.build_config())
+  M.winid = vim.api.nvim_open_win(bufnr, true, M.build_config(title))
 end
 
 M.close = function()
@@ -137,6 +150,28 @@ M.close = function()
   vim.api.nvim_win_close(M.winid, true)
   M.is_open = false
   M.winid = nil
+end
+
+---@param bufnr integer
+---@param current_message string
+M.open_text_box = function(bufnr, current_message)
+  local col = 2
+  local row = vim.api.nvim_buf_line_count(bufnr)
+  M.text_box.open(M.winid, row, col, current_message)
+end
+
+---@param current_bufnr integer
+M.close_text_box = function(current_bufnr)
+  local text = M.text_box.close()
+  if text == nil then
+    return
+  end
+  text[1] = "> " .. text[1]
+  vim.api.nvim_set_option_value("modifiable", true, { buf = current_bufnr })
+  vim.api.nvim_set_option_value("readonly", false, { buf = current_bufnr })
+  vim.api.nvim_buf_set_lines(current_bufnr, -2, -1, false, text)
+  vim.api.nvim_set_option_value("readonly", true, { buf = current_bufnr })
+  vim.api.nvim_set_option_value("modifiable", false, { buf = current_bufnr })
 end
 
 return M

@@ -14,6 +14,7 @@ local channelPicker = require("picker.module")
 ---@field opt.realname string
 ---@field opt.password string
 ---@field opt.channels string[]
+---@field opt.hidden_commands string[]
 local config = {
   opt = {},
 }
@@ -40,12 +41,12 @@ M.current_channel = nil
 M.channel_picker = channelPicker
 
 M.auto_close = function()
-  vim.cmd([[
-  augroup AutoCloseOnFocusLost
-    autocmd!
-    autocmd WinLeave * :IrcCloseUi
-  augroup END
-  ]])
+  -- vim.cmd([[
+  -- augroup AutoCloseOnFocusLost
+  --   autocmd!
+  --   autocmd WinLeave * :IrcCloseUi
+  -- augroup END
+  -- ]])
 end
 
 M.irc = function()
@@ -56,23 +57,25 @@ M.irc = function()
   assert(c.nickname, "nickname is required")
   assert(c.username, "username is required")
   assert(c.realname, "realname is required")
+
+  M.channels["logs"] = ircUi.init("logs")
   for _, channel in ipairs(c.channels) do
     M.current_channel = { name = channel, bufnr = ircUi.init(channel) }
     M.channels[channel] = M.current_channel.bufnr
     assert(M.current_channel.bufnr, "Failed to create buffer")
     assert(M.current_channel.name, "Failed to create buffer")
-    M.ui.prompt(M.current_channel.name, M.current_channel.bufnr)
+    M.ui.prompt(M.current_channel.bufnr)
   end
 
   for _, bufnr in pairs(M.channels) do
     M.init_keymaps(bufnr)
   end
 
-  M.client = client.init(c.server, c.port, c.nickname, c.username, c.realname)
-  M.client.connect_to_irc(M.output_data_to_ui)
-  local p = utils.ebg13(c.password)
-  M.client.login_to_irc(p)
-  M.client.join_channel(M.current_channel.name)
+  -- M.client = client.init(c.server, c.port, c.nickname, c.username, c.realname)
+  -- M.client.connect_to_irc(M.output_data_to_ui)
+  -- local p = utils.ebg13(c.password)
+  -- M.client.login_to_irc(p)
+  -- M.client.join_channel(M.current_channel.name)
 
   M.open_ui()
   vim.cmd('autocmd ExitPre * :lua require("irc_nvim").quit()')
@@ -87,16 +90,27 @@ M.output_data_to_ui = function(data)
     for _, line in ipairs(lines) do
       local split = vim.split(line, " ")
       local command = split[2]
+      if utils.value_in_table(command, M.config.opt.hidden_commands) then
+        goto continue
+      end
+      local channel = split[3]
       if command == cmd.PRIVMSG then
         local username = vim.split(split[1], "!")[1]:sub(2, -1)
-        local channel = split[3]
         local message_split = vim.split(line, ":")
         local message = table.remove(message_split, #message_split)
         local bufnr = M.channels[channel]
-        M.ui.message(channel, bufnr, username, message)
+        M.ui.message(bufnr, username, message, { kind = command })
+      elseif command == cmd.JOIN then
+        local bufnr = M.channels[channel]
+        local username = vim.split(split[1], "!")[1]:sub(2, -1)
+        local message = username .. " has joined "
+        M.ui.message(bufnr, username, message, { kind = command })
+      elseif command == cmd.PONG then
+        -- do nothing
       else
-        M.ui.write(M.current_channel.name, M.current_channel.bufnr, { line })
+        M.ui.log(M.channels["logs"], { line })
       end
+      ::continue::
     end
   end)
 end
@@ -120,13 +134,13 @@ M.send_message_from_ui = function()
   assert(bufnr, "No buffer to send message to")
   local message = M.ui.get_message_to_send(bufnr)
   if message == nil then
-    M.ui.write(channel, bufnr, { "No message to send" })
+    M.ui.write(bufnr, { "No message to send" })
     return
   end
   M.client.send_message(channel, message)
   M.ui.delete_message(bufnr)
-  M.ui.message(channel, bufnr, M.config.opt.username, message)
-  M.ui.prompt(M.current_channel.name, bufnr)
+  M.ui.message(bufnr, M.config.opt.username, message, { kind = cmd.PRIVMSG })
+  M.ui.prompt(bufnr)
 end
 
 M.jump_to_end_of_message = function()
@@ -138,7 +152,9 @@ M.close_ui = function()
 end
 
 M.open_ui = function()
-  M.ui.show(M.current_channel.bufnr)
+  local channel = M.current_channel.name
+  local bufnr = M.current_channel.bufnr
+  M.ui.show(bufnr, channel)
 end
 
 M.channel_list_ui = function()
@@ -154,7 +170,9 @@ M.goto_channel_from_picker = function()
   end
   M.channel_picker.close()
   M.current_channel = data
-  M.ui.show(M.current_channel.bufnr)
+  local channel = M.current_channel.name
+  local bufnr = M.current_channel.bufnr
+  M.ui.show(bufnr, channel)
 end
 
 ---@param bufnr integer
@@ -164,20 +182,33 @@ M.init_keymaps = function(bufnr)
   M.nmap(bufnr, "q", ":lua require('irc_nvim').close_ui()<CR>")
   M.nmap(bufnr, "<C-a>", ":lua require('irc_nvim').jump_to_end_of_message()<CR>")
   M.nmap(bufnr, "cp", ":IrcChannelPicker<CR>")
+  M.nmap(bufnr, "i", ":lua require('irc_nvim').open_message_box()<CR>")
+end
+
+M.open_message_box = function()
+  local bufnr = M.current_channel.bufnr
+  local message = M.ui.get_message_to_send(bufnr) or ""
+  message = message:sub(1, -1)
+  M.ui.open_text_box(bufnr, message)
+end
+
+M.close_message_box = function()
+  local bufnr = M.current_channel.bufnr
+  M.ui.close_text_box(bufnr)
 end
 
 ---@param bufnr integer
 ---@param keys string
 ---@param command string
 M.nmap = function(bufnr, keys, command)
-  vim.api.nvim_buf_set_keymap(bufnr, "n", keys, command, {})
+  vim.api.nvim_buf_set_keymap(bufnr, "n", keys, command, { silent = true })
 end
 
 ---@param bufnr integer
 ---@param keys string
 ---@param command string
 M.imap = function(bufnr, keys, command)
-  vim.api.nvim_buf_set_keymap(bufnr, "i", keys, command, {})
+  vim.api.nvim_buf_set_keymap(bufnr, "i", keys, command, { silent = true })
 end
 
 return M

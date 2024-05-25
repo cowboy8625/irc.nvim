@@ -42,4 +42,18 @@ M.ebg13 = function(text)
   )
 end
 
+---@generic T
+---@param value string
+---@param tbl T[] -- Table to search in
+---@return boolean
+-- Helper function to check if a value is in a table
+M.value_in_table = function(value, tbl)
+  for _, v in ipairs(tbl) do
+    if v == value then
+      return true
+    end
+  end
+  return false
+end
+
 return M

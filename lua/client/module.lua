@@ -1,5 +1,5 @@
 local cmd = require("client.command")
-local uv = vim.loop
+local uv = vim.uv
 
 ---@class IrcClient
 local M = {}
