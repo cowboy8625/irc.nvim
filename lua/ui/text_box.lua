@@ -25,17 +25,21 @@ M.open = function(parent_win, offset_row, offset_col, text)
   vim.cmd([[ au BufWinLeave <buffer> stopinsert ]])
 end
 
----@return string[]?
+---@return { text: string[], row: integer, col: integer }?
 M.close = function()
-  local text = nil
+  local result = nil
   if M.winid ~= nil and vim.api.nvim_win_is_valid(M.winid) then
-    text = vim.api.nvim_buf_get_lines(M.bufnr, 0, -1, false)
+    result = {}
+    result.text = vim.api.nvim_buf_get_lines(M.bufnr, 0, -1, false)
+    local row, col = unpack(vim.api.nvim_win_get_cursor(M.winid))
+    result.row = row
+    result.col = col
     vim.api.nvim_win_close(M.winid, true)
   end
   if M.bufnr ~= nil and vim.api.nvim_buf_is_valid(M.bufnr) then
     vim.api.nvim_buf_delete(M.bufnr, { force = true })
   end
-  return text
+  return result
 end
 
 ---@param width integer

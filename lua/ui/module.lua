@@ -170,16 +170,19 @@ end
 
 ---@param current_bufnr integer
 M.close_text_box = function(current_bufnr)
-  local text = M.text_box.close()
-  if text == nil then
+  local result = M.text_box.close()
+  if result == nil then
     return
   end
-  text[1] = "> " .. text[1]
+  local row = vim.api.nvim_buf_line_count(current_bufnr)
+  local col = result.col + 2
+  result.text[1] = "> " .. result.text[1]
   vim.api.nvim_set_option_value("modifiable", true, { buf = current_bufnr })
   vim.api.nvim_set_option_value("readonly", false, { buf = current_bufnr })
-  vim.api.nvim_buf_set_lines(current_bufnr, -2, -1, false, text)
+  vim.api.nvim_buf_set_lines(current_bufnr, -2, -1, false, result.text)
   vim.api.nvim_set_option_value("readonly", true, { buf = current_bufnr })
   vim.api.nvim_set_option_value("modifiable", false, { buf = current_bufnr })
+  vim.api.nvim_win_set_cursor(M.winid, { row, col })
 end
 
 return M
