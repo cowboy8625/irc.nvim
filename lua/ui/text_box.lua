@@ -22,6 +22,7 @@ M.open = function(parent_win, offset_row, offset_col, text)
   M.winid = vim.api.nvim_open_win(M.bufnr, true, M.build_config(width, row, col))
   vim.api.nvim_buf_set_lines(M.bufnr, 0, -1, false, { text })
   vim.api.nvim_feedkeys("A", "n", false)
+  vim.cmd([[ au BufWinLeave <buffer> stopinsert ]])
 end
 
 ---@return string[]
@@ -55,9 +56,9 @@ end
 M.init_ui_keymaps = function()
   vim.api.nvim_buf_set_keymap(
     M.bufnr,
-    "n",
+    "i",
     "<esc>",
-    ":lua require('irc_nvim').close_message_box()<CR>",
+    "<cmd>lua require('irc_nvim').close_message_box()<CR>",
     { silent = true }
   )
 end

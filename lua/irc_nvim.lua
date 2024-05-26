@@ -50,7 +50,10 @@ M.auto_close = function()
 end
 
 M.irc = function()
-  M.auto_close()
+  if M.current_channel then
+    M.open_ui()
+    return
+  end
   local c = M.config.opt
   assert(c.server, "server is required")
   assert(c.port, "port is required")
@@ -75,7 +78,10 @@ M.irc = function()
   -- M.client.connect_to_irc(M.output_data_to_ui)
   -- local p = utils.ebg13(c.password)
   -- M.client.login_to_irc(p)
-  -- M.client.join_channel(M.current_channel.name)
+
+  -- for _, channel in ipairs(c.channels) do
+  --   M.client.join_channel(channel)
+  -- end
 
   M.open_ui()
   vim.cmd('autocmd ExitPre * :lua require("irc_nvim").quit()')
@@ -158,6 +164,7 @@ M.open_ui = function()
 end
 
 M.channel_list_ui = function()
+  M.close_ui()
   local bufnr = M.channel_picker.init(M.channels, M.current_channel.bufnr)
   M.nmap(bufnr, "<enter>", ":lua require('irc_nvim').goto_channel_from_picker()<CR>")
   M.nmap(bufnr, "q", ":lua require('irc_nvim').channel_picker.close()<CR>")
@@ -209,6 +216,10 @@ end
 ---@param command string
 M.imap = function(bufnr, keys, command)
   vim.api.nvim_buf_set_keymap(bufnr, "i", keys, command, { silent = true })
+end
+
+M.fake_message = function()
+  M.output_data_to_ui(":JohnDoe!~john@example.com PRIVMSG ##rust :Hey Jane, how are you?")
 end
 
 return M

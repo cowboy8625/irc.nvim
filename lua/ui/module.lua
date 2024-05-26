@@ -71,7 +71,7 @@ M.has_prompt = function(bufnr)
     return false
   end
 
-  if line:sub(0, 2) == "> " then
+  if line:find("^" .. "> ") then
     return true
   end
   return false
@@ -105,7 +105,11 @@ end
 
 ---@param bufnr integer
 M.delete_message = function(bufnr)
+  vim.api.nvim_set_option_value("modifiable", true, { buf = bufnr })
+  vim.api.nvim_set_option_value("readonly", false, { buf = bufnr })
   vim.api.nvim_buf_set_lines(bufnr, -2, -1, false, {})
+  vim.api.nvim_set_option_value("readonly", true, { buf = bufnr })
+  vim.api.nvim_set_option_value("modifiable", false, { buf = bufnr })
 end
 
 ---@param bufnr integer
@@ -113,7 +117,7 @@ end
 ---@param ops? { kind: string }
 M.write = function(bufnr, messages, ops)
   local row = M.has_prompt(bufnr) and -2 or -1
-  if ops and ops.kind == cmd.PRIVMSG then
+  if ops and ops.kind ~= cmd.PRIVMSG then
     row = -1
   end
   vim.api.nvim_set_option_value("modifiable", true, { buf = bufnr })
@@ -126,7 +130,11 @@ end
 ---@param bufnr integer
 ---@param messages string[]
 M.log = function(bufnr, messages)
+  vim.api.nvim_set_option_value("modifiable", true, { buf = bufnr })
+  vim.api.nvim_set_option_value("readonly", false, { buf = bufnr })
   vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, messages)
+  vim.api.nvim_set_option_value("readonly", true, { buf = bufnr })
+  vim.api.nvim_set_option_value("modifiable", false, { buf = bufnr })
 end
 
 ---@param bufnr integer
