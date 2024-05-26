@@ -78,7 +78,7 @@ M.irc = function()
   -- M.client.connect_to_irc(M.output_data_to_ui)
   -- local p = utils.ebg13(c.password)
   -- M.client.login_to_irc(p)
-
+  --
   -- for _, channel in ipairs(c.channels) do
   --   M.client.join_channel(channel)
   -- end
@@ -134,6 +134,7 @@ M.quit = function()
 end
 
 M.send_message_from_ui = function()
+  M.close_message_box()
   local bufnr = M.current_channel.bufnr
   local channel = M.current_channel.name
   assert(channel, "No channel to send message to")

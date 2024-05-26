@@ -20,7 +20,7 @@ M.init = function(server_name)
   local bufnr = vim.api.nvim_create_buf(false, true)
   assert(bufnr, "Failed to create buffer")
   vim.api.nvim_buf_set_name(bufnr, server_name)
-  M.write(bufnr, { "Welcome to the IRC chat!" }, { kind = "message" })
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { "Welcome to the IRC chat!" })
   vim.api.nvim_set_option_value("syntax", "irc", { buf = bufnr })
   vim.api.nvim_set_option_value("buftype", "nofile", { buf = bufnr })
   vim.api.nvim_set_option_value("modifiable", false, { buf = bufnr })
@@ -163,7 +163,7 @@ end
 ---@param bufnr integer
 ---@param current_message string
 M.open_text_box = function(bufnr, current_message)
-  local col = 2
+  local col = 1
   local row = vim.api.nvim_buf_line_count(bufnr)
   M.text_box.open(M.winid, row, col, current_message)
 end

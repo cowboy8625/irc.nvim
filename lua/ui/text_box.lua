@@ -17,18 +17,19 @@ M.open = function(parent_win, offset_row, offset_col, text)
   M.init_ui_keymaps()
   local width = parent_config.width
   assert(width, "Parent window has no width")
-  local row = parent_config.row + offset_row
-  local col = parent_config.col + offset_col + 1
-  M.winid = vim.api.nvim_open_win(M.bufnr, true, M.build_config(width, row, col))
+  local row = offset_row
+  local col = offset_col + 1
+  M.winid = vim.api.nvim_open_win(M.bufnr, true, M.build_config(width, row, col, parent_win))
   vim.api.nvim_buf_set_lines(M.bufnr, 0, -1, false, { text })
   vim.api.nvim_feedkeys("A", "n", false)
   vim.cmd([[ au BufWinLeave <buffer> stopinsert ]])
 end
 
----@return string[]
+---@return string[]?
 M.close = function()
-  local text = vim.api.nvim_buf_get_lines(M.bufnr, 0, -1, false)
+  local text = nil
   if M.winid ~= nil and vim.api.nvim_win_is_valid(M.winid) then
+    text = vim.api.nvim_buf_get_lines(M.bufnr, 0, -1, false)
     vim.api.nvim_win_close(M.winid, true)
   end
   if M.bufnr ~= nil and vim.api.nvim_buf_is_valid(M.bufnr) then
@@ -40,16 +41,17 @@ end
 ---@param width integer
 ---@param row integer
 ---@param col integer
+---@param parent_win integer
 ---@return table
-M.build_config = function(width, row, col)
+M.build_config = function(width, row, col, parent_win)
   return {
-    relative = "editor",
+    relative = "win",
+    win = parent_win,
     style = "minimal",
     border = "none",
     width = width,
     height = 1,
-    row = row,
-    col = col,
+    bufpos = { row - 2, col },
   }
 end
 
@@ -59,6 +61,14 @@ M.init_ui_keymaps = function()
     "i",
     "<esc>",
     "<cmd>lua require('irc_nvim').close_message_box()<CR>",
+    { silent = true }
+  )
+
+  vim.api.nvim_buf_set_keymap(
+    M.bufnr,
+    "i",
+    "<enter>",
+    "<cmd>lua require('irc_nvim').send_message_from_ui()<CR>",
     { silent = true }
   )
 end
