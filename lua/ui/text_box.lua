@@ -1,3 +1,8 @@
+---@class TextBoxConfig
+---@field offset {row: integer, col: integer}
+---@field cursor { row: integer, col: integer }
+---@field key string
+
 ---@class TextBox
 local M = {}
 ---@type integer
@@ -8,20 +13,23 @@ M.winid = nil
 M.bufnr = nil
 
 ---@param parent_win integer
----@param offset_row integer
----@param offset_col integer
 ---@param text string
-M.open = function(parent_win, offset_row, offset_col, text)
+---@param config TextBoxConfig
+M.open = function(parent_win, text, config)
   local parent_config = vim.api.nvim_win_get_config(parent_win)
   M.bufnr = vim.api.nvim_create_buf(false, true)
   M.init_ui_keymaps()
   local width = parent_config.width
   assert(width, "Parent window has no width")
-  local row = offset_row
-  local col = offset_col + 1
-  M.winid = vim.api.nvim_open_win(M.bufnr, true, M.build_config(width, row, col, parent_win))
+  local row = config.offset.row
+  local col = config.offset.col + 1
+  local win_config = M.build_config(width - 2, row, col, parent_win)
+  M.winid = vim.api.nvim_open_win(M.bufnr, true, win_config)
+  vim.api.nvim_feedkeys(config.key, "n", false)
   vim.api.nvim_buf_set_lines(M.bufnr, 0, -1, false, { text })
-  vim.api.nvim_feedkeys("A", "n", false)
+  if config.cursor and config.cursor.row and config.cursor.col then
+    vim.api.nvim_win_set_cursor(M.winid, { config.cursor.row, config.cursor.col })
+  end
   vim.cmd([[ au BufWinLeave <buffer> stopinsert ]])
 end
 

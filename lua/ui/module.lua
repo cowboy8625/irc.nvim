@@ -161,11 +161,26 @@ M.close = function()
 end
 
 ---@param bufnr integer
+---@param index integer?
+---@param key string
 ---@param current_message string
-M.open_text_box = function(bufnr, current_message)
+M.open_text_box = function(bufnr, index, key, current_message)
   local col = 1
   local row = vim.api.nvim_buf_line_count(bufnr)
-  M.text_box.open(M.winid, row, col, current_message)
+  local cursor_row = 1
+  local cursor_col = index
+  local config = {
+    offset = {
+      row = row,
+      col = col,
+    },
+    cursor = {
+      row = cursor_row,
+      col = cursor_col,
+    },
+    key = key,
+  }
+  M.text_box.open(M.winid, current_message, config)
 end
 
 ---@param current_bufnr integer

@@ -190,14 +190,25 @@ M.init_keymaps = function(bufnr)
   M.nmap(bufnr, "q", ":lua require('irc_nvim').close_ui()<CR>")
   M.nmap(bufnr, "<C-a>", ":lua require('irc_nvim').jump_to_end_of_message()<CR>")
   M.nmap(bufnr, "cp", ":IrcChannelPicker<CR>")
-  M.nmap(bufnr, "i", ":lua require('irc_nvim').open_message_box()<CR>")
+  M.nmap(bufnr, "A", ":lua require('irc_nvim').open_message_box('A')<CR>")
+  M.nmap(bufnr, "i", ":lua require('irc_nvim').open_message_box('i')<CR>")
+  M.nmap(bufnr, "I", ":lua require('irc_nvim').open_message_box('I')<CR>")
 end
 
-M.open_message_box = function()
+---@param key "i" | "A" | "I"
+M.open_message_box = function(key)
   local bufnr = M.current_channel.bufnr
   local message = M.ui.get_message_to_send(bufnr) or ""
   message = message:sub(1, -1)
-  M.ui.open_text_box(bufnr, message)
+  local index = nil
+  if key == "i" then
+    local _, col = unpack(vim.api.nvim_win_get_cursor(M.ui.winid))
+    index = col - 2
+    if index < 0 then
+      index = 0
+    end
+  end
+  M.ui.open_text_box(bufnr, index, key, message)
 end
 
 M.close_message_box = function()
